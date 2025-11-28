@@ -71,6 +71,10 @@ use_redis = false;
 key_prefix = "ARC_KEYS";
 # Reuse the existing authentication results
 reuse_auth_results = false;
+# If `true` get pubkey from DNS record and check if it matches private key
+check_pubkey = false;
+# Set to `false` if you want to skip signing if public and private keys mismatch
+allow_pubkey_mismatch = true;
 # map of domains -> names of selectors (since rspamd 1.5.3)
 #selector_map = "/etc/rspamd/arc_selectors.map";
 # map of domains -> paths to keys (since rspamd 1.5.3)
@@ -178,6 +182,23 @@ redis.call('HMSET', 'ARC_KEYS', 'myselector.example.com', key)
 ~~~
 
 The selector will be selected according to the usual process. If a domain-specific selector is configured, it will be used; otherwise, the global setting will be applied.
+
+## ARC signing using Vault
+
+The ARC module supports Hashicorp Vault for key storage, using the same mechanism as [dkim_signing](/modules/dkim_signing#dkim-signing-using-vault). To enable Vault support:
+
+~~~hcl
+# local.d/arc.conf
+use_vault = true;
+vault_domains = ["example.com"]; # or file/http map path
+vault_url = "http://127.0.0.1:8200";
+vault_token = "s.YourVaultToken";
+# Optional settings
+# vault_path = "secret/arc";  # custom vault path (default: "dkim")
+# vault_kv_version = 1;  # KV engine version (1 or 2)
+~~~
+
+Refer to the [dkim_signing Vault documentation](/modules/dkim_signing#dkim-signing-using-vault) for complete details on Vault configuration and key management using `rspamadm vault`.
 
 ## Using maps
 
