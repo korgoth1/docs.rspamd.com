@@ -160,14 +160,20 @@ Optional map configuration attributes:
 * `prefilter` - defines if the map is used in [prefilter mode](#pre-filter-maps)
 * `action` - for prefilter maps defines action set by map match
 * `regexp` - set to `true` if your map contain [regular expressions](#regexp-maps)
+* `glob` - set to `true` if your map contains glob patterns instead of literal strings
 * `symbols` - array of symbols that this map can insert (for key-value pairs), [learn more](#multiple-symbol-maps). Please bear in mind, that if you define this attribute, your map must have entries in form `key<spaces>value` to match a specific symbol.
+* `dynamic_symbols` - set to `true` to automatically register symbols found in the map at load time (useful when symbol names are unknown/dynamic)
+* `disable_multisymbol` - set to `true` to disable multi-symbol mode and always use the main rule symbol, adding matched values as options instead
 * `score` - score of the symbol (can be redefined in the `metric` section)
 * `description` - map description
 * `message` - message returned to MTA on prefilter reject action being triggered
+* `message_func` - a Lua function string that returns a custom message for prefilter actions; receives `(task, symbol, opt)` as arguments
 * `group` - group for the symbol (can be redefined in `metric`)
 * `require_symbols` - expression of symbols that have to match for a specific message: [learn more](#conditional-maps)
 * `filter` - match specific part of the input (for example, email domain): [here](#map-filters) is the complete definition of maps filters
 * `extract_from` - attribute extracts values of the sender/recipient from the SMTP dialog or the From/To header. To achieve this, set the value to `smtp`, `mime`, or `both` to match both sources. It's important to note that `extract_from` is solely utilized in conjunction with the `from` or `rcpt` map [type](#map-types).
+* `multi` - set to `true` to match all possible regexp/glob entries in the map, not just the first match
+* `one_shot` - set to `true` to limit scoring to a single match (useful with content maps that may match multiple parts)
 * `combinator` - (from version 3.14.1) for selector-type maps, specifies how multiple selector results should be combined. Available values: `string` (default, concatenate with delimiter), `array` (flatten into array), `object` (convert pairs to key-value object). See [Selector Combinators](#selector-combinators) for details.
 
 When using header maps, it is essential to specify the exact `header` by utilizing the header option.
@@ -281,7 +287,7 @@ Type attribute means what is matched with this map. The following types are supp
 | `dnsbl` | matches IP of the host that performed message handoff against some DNS blacklist (consider using [RBL](/modules/rbl) module for this)
 | `filename` | matches attachment filenames and filenames in archives against map. It also includes detected filename match from version 2.0. For example, if some attachment has `.png` extension but it has real type detected as `image/jpeg` then two checks would be performed: for the original attachment and for the detected one. This does not include files in archives as Rspamd does not extract them.
 | `from` | matches **envelope** from (or header `From` if envelope from is absent)
-| `header` | matches any header specified (must have `header = "Header-Name"` configuration attribute)
+| `header` | matches any header specified (must have `header = "Header-Name"` configuration attribute; can also be an array of header names to check multiple headers)
 | `helo` | matches HELO of the message handoff session
 | `hostname` | matches reverse DNS name of the host that performed message handoff
 | `ip` | matches IP of the host that performed message handoff (against radix map)
@@ -454,6 +460,13 @@ Filename maps support the following set of filters:
 | `extension` | matches file extension
 | `regexp:/re/` | extract data from filename according to some regular expression
 
+Additionally, filename maps support the following configuration options:
+
+| Option            | Description                       |
+| :-------------- | :-------------------------------- |
+| `skip_archives` | set to `true` to skip checking filenames inside archives
+| `skip_detected` | set to `true` to skip checking detected (magic-based) filenames, only check the original filename
+
 ### From, rcpt and header filters
 
 These are generic emails and headers filters:
@@ -507,6 +520,7 @@ Negative values can be specified to match positions relative to the end of Recei
 
 * `flags` - One of more flags which MUST be present to match
 * `nflags` - One or more flags which must NOT be present to match
+* `artificial` - set to `true` to include artificial (internally generated) Received headers in matching; by default these are excluded
 
 Currently available flags are `ssl` (hop used SSL) and `authenticated` (hop used SMTP authentication).
 
