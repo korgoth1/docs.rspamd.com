@@ -86,31 +86,71 @@ rules {
 
 Optional parameters (and their defaults if applicable) are as follows:
 
-- `dkim_domainonly` (true) - lookup eSLD associated with DKIM signature rather than full label
-- `dkim_match_from` (false) - only check DKIM signatures matching the `From` header
-- `emails_domainonly` (false) - lookup domain of address instead of full address
+**General options:**
 - `enabled` (true) - allow for disabling of RBLs
+- `symbol` - custom symbol name for this RBL (defaults to rule key in uppercase)
 - `exclude_local` (true) - do not check messages from private IPs against this RBL (for `received` check: do not check private IPs at all)
 - `exclude_users` (false) - do not check this RBL if sender is an authenticated user
-- `hash` - valid for `helo` and `emails` RBL types - lookup hashes instead of literal strings. Possible values for this parameter are `sha1`, `sha256`, `sha384`, `sha512` and `md5` or any other value for the default hashing algorithm.
-- `hash_format` - encoding to use for hash: `hex`, `base32` or `base64`
-- `ignore_whitelist` (false) - allow whitelists to neutralise this RBL
-- `images` (false) - whether image URLs should be checked by `urls` check
+- `exclude_checks` - array of check types to explicitly disable for this rule
+- `require_symbols` - list of symbols that must be present for this RBL to run
+
+**IP-related options:**
 - `ipv4` (true) - if IPv4 addresses should be checked
 - `ipv6` (true) - if IPv6 addresses should be checked
-- `is_whitelist` (false) - denotes that this RBL is an whitelist
-- `local_exclude_ip_map` - map containing IPv4/IPv6 addresses/subnets which should be considered private (and treated as local by `exclude_local`)
-- `monitored_address` (`1.0.0.127`) - fixed address to check for absence; see section on monitoring for more information
 - `no_ip` (false) - do not look up IP addresses in this RBL
+- `resolve_ip` - resolve the domain to IP address before lookup
+
+**DKIM options:**
+- `dkim_domainonly` (true) - lookup eSLD associated with DKIM signature rather than full label
+- `dkim_match_from` (false) - only check DKIM signatures matching the `From` header
+
+**Email options:**
+- `emails_domainonly` (false) - lookup domain of address instead of full address
+- `emails_delimiter` - delimiter between user and domain (default: `.`, or `@` when hashing)
+
+**URL options:**
+- `images` (false) - whether image URLs should be checked by `urls` check
 - `requests_limit` (9999) - maximum number of entities extracted by URL checks
-- `resolve_ip` - resolve the domain to IP address
-- `returnbits` - dictionary of symbols mapped to bit positions; if the bit in the specified position is set the symbol will be returned
-- `returncodes` - dictionary of symbols mapped to lua patterns; if result returned by the RBL matches the pattern the symbol will be returned
-- `returncodes_matcher` - a specific mechanism for testing `returncodes`, see [details](/modules/rbl#returncodes-matchers)
-- `selector_flatten` (true) - when disabled will lookup result of chained selector as a single label without any separator
-- `selector` - one or more selectors producing data to look up in this RBL; see section on selectors for more information
-- `unknown` (false) - yield default symbol if `returncodes` or `returnbits` is specified and RBL returns unrecognised result
+- `url_full_hostname` (false) - use full hostname instead of eSLD for URL lookups
+- `url_compose_map` - map defining custom URL composition rules
+
+**Hashing options:**
+- `hash` - lookup hashes instead of literal strings. Possible values: `sha1`, `sha256`, `sha384`, `sha512`, `md5`, `blake2`
+- `hash_format` - encoding to use for hash: `hex`, `base32` or `base64`
+- `hash_len` - truncate hash to specified length
+
+**Received header options:**
+- `received_min_pos` - minimum position of Received header to match (negative values match from end)
+- `received_max_pos` - maximum position of Received header to match (negative values match from end)
+- `received_flags` - array of flags that MUST be present (e.g., `["ssl", "authenticated"]`)
+- `received_nflags` - array of flags that must NOT be present
+
+**Whitelist options:**
+- `ignore_whitelist` (false) - allow whitelists to neutralise this RBL
+- `ignore_url_whitelist` (false) - ignore the global URL whitelist for this RBL
+- `is_whitelist` (false) - denotes that this RBL is a whitelist
+- `whitelist` - map of entries to skip for this RBL
 - `whitelist_exception` - for whitelists; list of symbols which will not act as whitelists
+
+**Return code options:**
+- `returnbits` - dictionary of symbols mapped to bit positions; if the bit in the specified position is set the symbol will be returned
+- `returncodes` - dictionary of symbols mapped to patterns; if result returned by the RBL matches the pattern the symbol will be returned
+- `returncodes_matcher` - a specific mechanism for testing `returncodes`, see [details](/modules/rbl#returncodes-matchers)
+- `unknown` (false) - yield default symbol if `returncodes` or `returnbits` is specified and RBL returns unrecognised result
+- `symbols_prefixes` - map of check types to symbol prefixes for multi-type RBLs
+
+**Selector options:**
+- `selector` - one or more selectors producing data to look up in this RBL; see section on selectors for more information
+- `selector_flatten` (true) - when disabled will lookup result of chained selector as a single label without any separator
+
+**Monitoring options:**
+- `disable_monitoring` (false) - disable health monitoring for this RBL
+- `monitored_address` (`1.0.0.127`) - fixed address to check for absence; see section on monitoring for more information
+- `random_monitored` - explicitly control whether random strings are used for monitoring (auto-detected based on check types)
+
+**Advanced options:**
+- `local_exclude_ip_map` - map containing IPv4/IPv6 addresses/subnets which should be considered private (and treated as local by `exclude_local`)
+- `process_script` - Lua script for custom request processing
 
 Some examples of using RBL:
 
